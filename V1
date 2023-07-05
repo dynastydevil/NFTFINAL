@@ -1,0 +1,40 @@
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+
+contract TraitChangingNFT is ERC721 {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
+
+    uint256 private constant MAX_TRAIT_CHANGES = 3;
+
+    mapping(uint256 => uint256) private _traitChanges;
+
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
+
+    function createNFT(address to, uint256 trait) external returns (uint256) {
+        require(trait > 0, "Trait must be greater than zero");
+
+        _tokenIds.increment();
+        uint256 tokenId = _tokenIds.current();
+        _mint(to, tokenId);
+        _traitChanges[tokenId] = trait;
+
+        return tokenId;
+    }
+
+    function changeTrait(uint256 tokenId, uint256 newTrait) external {
+        require(_exists(tokenId), "Token ID does not exist");
+        require(_traitChanges[tokenId] < MAX_TRAIT_CHANGES, "Trait change limit exceeded");
+
+        _traitChanges[tokenId] = newTrait;
+    }
+
+    function burnNFT(uint256 tokenId) external {
+        require(_exists(tokenId), "Token ID does not exist");
+
+        _burn(tokenId);
+        delete _traitChanges[tokenId];
+    }
+}
